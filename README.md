@@ -1,20 +1,5 @@
-# Vehicle Detection
-[![Udacity - Self-Driving Car NanoDegree](https://s3.amazonaws.com/udacity-sdc/github/shield-carnd.svg)](http://www.udacity.com/drive)
-
-
-In this project, your goal is to write a software pipeline to detect vehicles in a video (start with the test_video.mp4 and later implement on full project_video.mp4), but the main output or product we want you to create is a detailed writeup of the project.  Check out the [writeup template](https://github.com/udacity/CarND-Vehicle-Detection/blob/master/writeup_template.md) for this project and use it as a starting point for creating your own writeup.  
-
-Creating a great writeup:
+# Vehicle Detection Project
 ---
-A great writeup should include the rubric points as well as your description of how you addressed each point.  You should include a detailed description of the code used in each step (with line-number references and code snippets where necessary), and links to other supporting documents or external references.  You should include images in your writeup to demonstrate how your code works with examples.  
-
-All that said, please be concise!  We're not looking for you to write a book here, just a brief description of how you passed each rubric point, and references to the relevant code :). 
-
-You can submit your writeup in markdown or use another method and submit a pdf instead.
-
-The Project
----
-
 The goals / steps of this project are the following:
 
 * Perform a Histogram of Oriented Gradients (HOG) feature extraction on a labeled training set of images and train a classifier Linear SVM classifier
@@ -24,14 +9,142 @@ The goals / steps of this project are the following:
 * Run your pipeline on a video stream (start with the test_video.mp4 and later implement on full project_video.mp4) and create a heat map of recurring detections frame by frame to reject outliers and follow detected vehicles.
 * Estimate a bounding box for vehicles detected.
 
-Here are links to the labeled data for [vehicle](https://s3.amazonaws.com/udacity-sdc/Vehicle_Tracking/vehicles.zip) and [non-vehicle](https://s3.amazonaws.com/udacity-sdc/Vehicle_Tracking/non-vehicles.zip) examples to train your classifier.  These example images come from a combination of the [GTI vehicle image database](http://www.gti.ssr.upm.es/data/Vehicle_database.html), the [KITTI vision benchmark suite](http://www.cvlibs.net/datasets/kitti/), and examples extracted from the project video itself.   You are welcome and encouraged to take advantage of the recently released [Udacity labeled dataset](https://github.com/udacity/self-driving-car/tree/master/annotations) to augment your training data.  
+[//]: # (Image References)
+[image1]: ./test_images/test4.jpg
+[image2]: ./final_window_img.jpg
+[image3]: ./final_draw_img.jpg
+[image4]: ./output_images/data_look.jpg
+[image5]: ./output_images/spatial_binning.jpg
+[image6]: ./output_images/YCrCb_color_hist.jpg
+[image7]: ./output_images/HOG_visualization.jpg
+[image8]: ./output_images/010-All_Channels_of_YCrCb.JPG
+[image9]: ./output_images/011-HSV_ALL_21_16_4.JPG
+[image10]: ./output_images/window_img_64_0.8_SVM_Change_3_F.jpg
+[image11]: ./output_images/window_img_96_0.9.jpg
+[image12]: ./output_images/HSV_color_hist.jpg
+[image13]: ./output_images/raw_and_normalized_features.jpg
 
-Some example images for testing your pipeline on single frames are located in the `test_images` folder.  To help the reviewer examine your work, please save examples of the output from each stage of your pipeline in the folder called `ouput_images`, and include them in your writeup for the project by describing what each image shows.    The video called `project_video.mp4` is the video your pipeline should work well on.  
+[video1]: ./project_video_processed.mp4
 
-**As an optional challenge** Once you have a working pipeline for vehicle detection, add in your lane-finding algorithm from the last project to do simultaneous lane-finding and vehicle detection!
+## [Rubric](https://review.udacity.com/#!/rubrics/513/view) Points
+Here I will consider the rubric points individually and describe how I addressed each point in my implementation.  
 
-**If you're feeling ambitious** (also totally optional though), don't stop there!  We encourage you to go out and take video of your own, and show us how you would implement this project on a new video!
+---
+### Writeup / README
 
-## How to write a README
-A well written README file can enhance your project and portfolio.  Develop your abilities to create professional README files by completing [this free course](https://www.udacity.com/course/writing-readmes--ud777).
+#### 1. Provide a Writeup / README that includes all the rubric points and how you addressed each one. 
 
+You're reading it!
+
+### Histogram of Oriented Gradients (HOG)
+
+#### 1. Explain how (and identify where in your code) you extracted HOG features from the training images.
+
+Before we get started about HOG and other features of images, let us have a look at the training dataset which we are using for this project. The dataset consist of vehicle and non-vehicle images and a sample of this is shown below:
+
+![alt text][image4]
+
+The function to compute HOG i.e. `get_hog_features()` is written in Cell 4 of my Jupyter Notebook along with other functions like `bin_spatial()` and `color_hist()`. Its visualization is displayed in Cell 7 of the notebook.  
+The HOG feature is using following parameters:
+| | |
+| orient | 9 |
+| pix_per_cell | 8 |
+| cell_per_block | 2 |
+
+I have also used Spatial binning and Color Histogram along with HOG for feature extraction. The following figures illustrates the various features extracted from the input images:
+
+![alt text][image5]
+
+![alt text][image6]
+
+![alt text][image12]
+
+![alt text][image7]
+
+![alt text][image13]
+
+In earlier iterations of my project, being lazy I just used KITTI dataset for the training purposes and feature extraction. Classifier trained only on KITTI dataset worked fine on single image. However, the output I received due to this was such that only back portion of the car was detected but the side portions were not detected by my classifier. I believe the reason behind this is because KITTI dataset contains all the images from the single perspective angle i.e. back.
+
+Then I used all the available images of GTI dataset along with KITTI dataset which lead to a better accuracy and improved vehicle detection.
+
+#### 2. Explain how you settled on your final choice of HOG parameters.
+
+I tried various values for HOG parameters and all the changes directly impacted the feature vector length along with change in time required to train SVM Classifier and its accuracy. All the results are placed in **"HOG_Features"** directory for the reference. Here are two different value sets shown for among the all tested values:
+
+![alt text][image8]
+
+<h4 align="center">
+Histogram of All channels in YCrCb Color Space
+<h4>
+
+![alt text][image9]
+
+<h4 align="center">
+Histogram of All channels in HSV Color Space
+<h4>
+
+I was able to reduce the training time by increasing value of orient and reducing hist_bin and spatial_size values. This also showed a good training accuracy but the classifier was not giving satisfying results and finally I ended up using the HOG parameters similar to Udacity's Classroom content itself.
+
+#### 3. Describe how (and identify where in your code) you trained a classifier using your selected HOG features (and color features if you used them).
+
+Cell 9 and 10 contains the parameters which can be tweaked before extracting features and a call to extract car and non-car features. These features are then used for the purposes of training Linear SVM in cell 12. Like I mentioned above, I tried various combinations of feature parameters which lead to different feature vector every time. Finally I settled with the parameters similar to Udacity and my feature vector was having the length of 8460.
+
+### Sliding Window Search
+
+#### 1. Describe how (and identify where in your code) you implemented a sliding window search.  How did you decide what scales to search and how much to overlap windows?
+
+The code related to Sliding Window search is located in Cell 13 designated as **"Car Search"**. The parameters for sliding window size and overlap are located in Cell 14 along with the code to actually search the cars in an image and draw the boxes on the image as per the search result.
+
+I tried so many different values of xy_window and xy_overlap along with different 3 different feature vectors. The various results are stored in **Sliding_Experiment** directory. Finally I got the best result from Rana Khalil's work for these parameters like I mentioned above in the attribution. The final values which I used are: xy_overlap = (0.8, 0.8) and xy_window = (80,80)
+
+Here are two sets of values for `Sliding Experiment` among all the values:
+
+![alt text][image10]
+
+<h4 align="center">
+64 x 64 window size and 0.8 overlap
+<h4>
+
+![alt text][image11]
+
+<h4 align="center">
+96 x 96 window size and 0.9 overlap
+<h4>
+
+#### 2. Show some examples of test images to demonstrate how your pipeline is working.  What did you do to optimize the performance of your classifier?
+
+I have mentioned above all the iterations I tried to finally reach the desired results but to sum them up, I did the 3 major changes as follow:
+
+1. Increased the training dataset by considering GTI images along with KITTI images. My 1st iteration only had KITTI images in it and GTI were skipped.
+2. Earlier iterations has parameters of feature extraction such that the SVM was getting trained very quickly due to small feature vector length and was still providing correct accuracy on training/test data. However it was not working well on video pipeline so the parameters were changed to original Udacity parameters.
+3. Experimented with Window size and window overall to get the best possible vehicle detection avoiding false positives.
+
+Here are the images showing working of pipeline.
+
+![alt text][image1]
+![alt text][image2]
+![alt text][image3]
+
+---
+
+### Video Implementation
+
+#### 1. Provide a link to your final video output.  Your pipeline should perform reasonably well on the entire project video (somewhat wobbly or unstable bounding boxes are ok as long as you are identifying the vehicles most of the time with minimal false positives.)
+
+Here's a [link to my video result](./project_video_processed.mp4)
+
+#### 2. Describe how (and identify where in your code) you implemented some kind of filter for false positives and some method for combining overlapping bounding boxes.
+
+As taught in the classroom lectures, heatmap and thresholding was used to sum up the nearby frames detected as vehicle. Then label() function was used to identify vehicles in the image. The functions for this are defined in cell 15 and been called in cell 16 and processing pipeline.
+
+---
+
+### Discussion
+
+#### 1. Briefly discuss any problems / issues you faced in your implementation of this project.  Where will your pipeline likely fail?  What could you do to make it more robust?
+
+Like I mentioned above, I was was first facing the issue that my pipeline was detecting only back portion of cars and not the side portion. This was resolved by adding more training data. Then I faced the issue of low detection area of car which was fixed by manipulating sliding window search parameters. And finally I faced the issue of having a video outputting complete black screen with only bounding boxes in it describing the location of car in the frame. This was fixed by maintaining a copy of original frame in the processing pipeline and then using this copy to draw bounding boxes. The issue occurred due to range conversion of (0 - 1) and (0 - 255).
+
+I believe that this pipeline will likely fail for any new type of car it sees as it heavily depends on the models of cars and their specific shapes. It cannot do a job similar to human eye by detecting any new type of car with a different shape then usual car shapes. Also, I believe that my pipeline is very slow, at least it took a lot of time on my slow system and it can be optimized to become more faster and accurate relatively.
+
+One funny scenario which comes to my mind where this pipeline might fail is that in India, sometimes people keep the trunk of the car open and they load some stuff in it. If such vehicle is going on the road, this pipeline might not detect it as a car I believe.
